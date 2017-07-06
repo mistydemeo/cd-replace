@@ -230,6 +230,8 @@ void Replace(char *isoname, char *oldname, char *newname) {
   unsigned int   tbl_lba, tbl_len;
   unsigned int   count, maxim;
   unsigned int   i, j, k;
+  unsigned int   oldname_length = strlen(oldname) + 2;
+  char           newoldname[oldname_length];
 
   // check the image mode
   mode = CheckMode(isoname);
@@ -264,9 +266,8 @@ void Replace(char *isoname, char *oldname, char *newname) {
 
   // 'oldname' must start with a path separator
   if ((oldname[0] != '/') && (oldname[0] != '\\')) {
-    i = StrLen(oldname) + 1;
-    while (i--) oldname[i + 1] = oldname[i];
-    oldname[0] = '/';
+    snprintf(newoldname, oldname_length, "%s%s", "/", oldname);
+    oldname = newoldname;
   }
   // change all backslashes by slashes in 'oldname'
   i = StrLen(oldname);
