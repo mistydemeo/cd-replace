@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
   unsigned int  sect, synz, sync, hdrz, subz, edcx, edcz, eccx;
   unsigned int  m1, f1, f2;
   unsigned int  i, j;
+  long          length;
 
   printf("\nReed-Solomon Test - Copyright (C) 2012 CUE\n\n");
 
@@ -83,11 +84,13 @@ int main(int argc, char **argv) {
 
   Init();
 
-  sect = filelength(fileno(fp)) / 0x930;
+  fseek(fileno(fp), 0, SEEK_END);
+  length = ftell(fileno(fp));
+  sect = length / 0x930;
   if (!sect) {
     printf("La imagen debe tener al menos un sector\n");
     return(1);
-  } else if (sect * 0x930 != filelength(fileno(fp))) {
+  } else if (sect * 0x930 != length) {
     printf("AVISO: La imagen tiene el sector final imcompleto\n\n");
   }
 
