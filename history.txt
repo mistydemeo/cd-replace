@@ -1,0 +1,42 @@
+--------------------------------------------------------------------------------
+cd-replace                                           Copyright (C) 2012-2013 CUE
+--------------------------------------------------------------------------------
+
+version XXXXXXXXXX
+------------------
+  - private version, never released
+  - replace files in a MODE0 CD image
+
+version 2012-03-11
+------------------
+  - added 'history.txt'
+  - renamed 'mode0' to 'cd-replace'
+  - replace files in a MODE0/MODE1 CD image
+  - added 'ecc.txt' (in spanish)
+  - 'rs-test' included to test Reed-Solomon with some CD-ROM images
+      + CD-ROM MODE1
+      + CD-ROM-XA MODE2 (PSX/PS2 CD images)
+
+version 2012-03-15
+------------------
+  - added 'readme.txt'
+  - solved a bug updating the LBA in the '.' and '..' entries
+  - solved a bug updating empty files with the same LBA
+
+version 2012-03-16
+------------------
+  - first public version
+  - added GNU General Public License version 3.0
+  - added all source code
+
+version 2013-03-15
+------------------
+  - solved a bug in the total sectors
+
+version 2013-09-25
+------------------
+  - solved a bug in the include file
+
+--------------------------------------------------------------------------------
+End of file                                          Copyright (C) 2012-2013 CUE
+--------------------------------------------------------------------------------

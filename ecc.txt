@@ -1,0 +1,137 @@
+--------------------------------------------------------------------------------
+Breve explicación sobre los ECC de un sector de CD        Copyright (C) 2012 CUE
+--------------------------------------------------------------------------------
+
+"ECC" es la abreviatura inglesa de "Códigos de Corrección de Error", que son las
+tablas de bytes utilizadas para corregir datos corruptos. En este caso nos sirve
+para corregir errores de lectura de sectores de un CD en MODE1 o MODE2/FORM1.
+
+Siempre se calculan dos tablas de correccón de errores:
+ - tabla de paridad P, de 172 bytes, sobre los bytes del sector
+ - tabla de paridad Q, de 104 bytes, para proteger los bytes de paridad P
+
+No se debe confundir la paridad P/Q con los subcanales P/Q. El uso de las mismas
+letras no significa que se trate de lo mismo.
+
+La tabla de paridad P se calcula usando un código Reed-Solomon sobre 2064 bytes,
+todos los del sector excepto los de sincronización. En los sectores que sean del
+tipo MODE2/FORM1 se deben poner a cero los 4 bytes de la cabecera antes de hacer
+el cálculo de los valores.
+
+Esos 2064 bytes se dividen en dos matrices de 1032 bytes, una conteniendo los de
+las posiciones pares y otra con los de las posiciones impares. Cada matriz se va
+a organizar en 24 filas de 43 columnas según muestran las Tablas 2 y 3, poniendo
+los datos en cada matriz de izquierda a derecha y de arriba a abajo.
+
+Los datos de la paridad P se calculan usando un código Reed-Solomon de (26,24) y
+añadiendo el resultado en dos filas que se añadirán a cada matriz. Hay que tener
+en cuenta que las posiciones de los valores de esas dos nuevas filas también han
+de considerar si son posiciones pares o impares, tal y como está reflejado en la
+numeración de las Tablas 2 y 3. Las dos nuevas filas también almacenan los datos
+de derecha a izquierda y de arriba a abajo, es decir, rellenando la primera fila
+antes de hacerlo con la segunda.
+
+Ahora se calcula la tabla de paridad Q usando un código Reed-Solomon de (45,43),
+transformando antes cada una de las dos matrices en una nueva de 26 filas por 43
+columnas (se incluyen las 2 nuevas filas), donde cada fila se obtendrá colocando
+los elementos de la diagonal que baja de izquierda a derecha comenzando cada una
+de las filas con el primer elemento de la primera columna de la matriz original,
+como está indicado en la Tabla 4.
+
+Los datos de la paridad Q se colocan en 2 nuevas columnas añadidas a cada una de
+las matrices, teniendo en cuenta las posiciones pares o impares, como en el caso
+de la paridad P. Ahora los datos se almacenan de arriba a abajo y de izquierda a
+derecha, rellenando la primera columna antes de hacerlo con la segunda.
+
+Con toda esta información de corrección de errores se pueden detectar y corregir
+un error por cada fila y columna de las matrices. Pueden llegar a corregirse dos
+errores si la unidad de lectura tiene flags de borrado en su código Reed-Solomon
+de intercalación transversal.
+
+--------------------------------------------------------------------------------
+
+* Tabla 1: Estructura de un sector según su modo
+                    +--------------------------+--------------------------+
+                    |    Longitud del Campo    |     Offset del Campo     |
++-------------------+--------------------------+--------------------------+
+| Modo              | -M0- -M1- -M2- -F1- -F2- | -M0- -M1- -M2- -F1- -F2- |
++-------------------+--------------------------+--------------------------+
+| Sincronización    |    -   12   12   12   12 |    -    0    0    0    0 |
+| Cabecera          |    -    4    4    4    4 |    -   12   12   12   12 |
+| Subcabecera       |    -    -    -    8    8 |    -    -    -   16   16 |
+| Datos de Usuario  | 2048 2048 2336 2048 2324 |    0   16   16   24   24 |
+| EDC               |    -    4    -    4    4 |    - 2064    - 2072 2348 |
+| Intermedio        |    -    8    -    -    - |    - 2068    -         - |
+| ECC-P             |    -  172    -  172    - |    - 2076    - 2076    - |
+| ECC-Q             |    -  104    -  104    - |    - 2248    - 2248    - |
++-------------------+--------------------------+--------------------------+
+| Tamaño del Sector | 2048 2352 2352 2352 2352 | 2048 2352 2352 2352 2352 |
++-------------------+--------------------------+--------------------------+
+
+* Tabla 2: Numeración de los datos de un sector para el cálculo de la paridad
++----------------+---------------------+
+| Sincronización | S001 S002 S003 S004 |
+|                | S005 S006 S007 S008 |
+|                | S009 S010 S011 S012 |
++----------------+---------------------+
+| Datos          | 0001 0002 0003 0004 |
+|                | 0005 0006 0007 0008 |
+|                | 0009 0010 0011 0012 |
+|                | ................... |
+|                | 2053 2054 2055 2056 |
+|                | 2057 2058 2059 2060 |
+|                | 2061 2062 2063 2064 |
++----------------+---------------------+
+| Paridad P      | 2065 2066 2067 2068 |
+|                | 2069 2070 2071 2072 |
+|                | ................... |
+|                | 2229 2230 2231 2232 |
+|                | 2233 2234 2235 2236 |
++----------------+---------------------+
+| Paridad Q      | 2237 2238 2239 2240 |
+|                | 2241 2242 2243 2244 |
+|                | ................... |
+|                | 2333 2334 2335 2336 |
+|                | 2337 2338 2339 2340 |
++----------------+---------------------+
+
+* Tabla 3: Matrices para calcular la paridad P
+     +-----------------------------------+-----------------------------------+
+     |  01   02   03  ...  41   42   43  |  01   02   03  ...  41   42   43  |
++----+-----------------------------------+-----------------------------------+
+| 01 | 0001 0003 0005 ... 0081 0083 0085 | 0002 0004 0006 ... 0082 0084 0086 |
+| 02 | 0087 0089 0091 ... 0167 0169 0171 | 0088 0090 0092 ... 0168 0170 0172 |
+| 03 | 0173 0175 0177 ... 0253 0255 0257 | 0174 0176 0178 ... 0254 0256 0258 |
+| .. | .............. ... .............. | .............. ... .............. |
+| 22 | 1807 1809 1811 ... 1887 1889 1891 | 1808 1810 1812 ... 1888 1890 1892 |
+| 23 | 1893 1895 1897 ... 1973 1975 1977 | 1894 1896 1898 ... 1974 1976 1978 |
+| 24 | 1979 1981 1983 ... 2059 2061 2063 | 1980 1982 1984 ... 2060 2062 2064 |
++----+-----------------------------------+-----------------------------------+
+| P1 | 2065 2067 2069 ... 2145 2147 2149 | 2066 2068 2070 ... 2146 2148 2150 |
+| P2 | 2151 2153 2155 ... 2231 2233 2235 | 2152 2154 2156 ... 2332 2234 2236 |
++----+-----------------------------------+-----------------------------------+
+
+* Tabla 4: Matrices para calcular la paridad Q
+     +-----------------------------------+-----------+
+     |  01   02   03  ...  41   42   43  |  Q1   Q2  |
++----+-----------------------------------+-----------+
+| 01 | 0001 0089 0177 ... 1285 1373 1461 | 2237 2289 |
+| 02 | 0087 0175 0263 ... 1371 1459 1547 | 2239 2291 |
+| 03 | 0173 0261 0349 ... 1457 1545 1633 | 2241 2293 |
+| .. | .............. ... .............. | ......... |
+| 24 | 1979 2067 2155 ... 1027 1115 1203 | 2283 2335 |
+| 25 | 2065 2153 0005 ... 1113 1201 1289 | 2285 2337 |
+| 26 | 2151 0003 0091 ... 1199 1287 1375 | 2287 2339 |
++----+-----------------------------------+-----------+
+| 01 | 0002 0090 0178 ... 1286 0686 0730 | 2238 2290 |
+| 02 | 0088 0176 0264 ... 1372 0729 0773 | 2240 2292 |
+| 03 | 0174 0262 0350 ... 1458 0772 0816 | 2242 2294 |
+| .. | .............. ... .............. | ......... |
+| 24 | 1980 2068 2156 ... 1028 1116 1204 | 2284 2336 |
+| 25 | 2066 2154 0006 ... 1114 1202 1290 | 2286 2338 |
+| 26 | 2152 0004 0092 ... 1200 1288 1376 | 2288 2340 |
++----+-----------------------------------+-----------+
+
+--------------------------------------------------------------------------------
+Final del fichero                                         Copyright (C) 2012 CUE
+--------------------------------------------------------------------------------
