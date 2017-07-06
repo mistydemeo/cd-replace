@@ -135,8 +135,9 @@ int FileSize(char *filename) {
   FILE *fp;
   int   fs;
 
-  if ((fp = fopen(filename, "rb")) == NULL) EXIT("File open error\n");
-  fs = filelength(fileno(fp));
+  if ((fp = fopen(filename, "rb")) == NULL) EXIT("File open error (FileSize)\n");
+  fseek(fp, 0, SEEK_END);
+  fs = ftell(fp);
   if (fclose(fp) == EOF) EXIT("File close error\n");
 
   return(fs);
@@ -159,7 +160,7 @@ char *Read(char *filename, int position, int length) {
 
   if (position + length > FileSize(filename)) EXIT("Read past the end\n");
 
-  if ((fp = fopen(filename, "rb")) == NULL) EXIT("File open error\n");
+  if ((fp = fopen(filename, "rb")) == NULL) EXIT("File open error (Read)\n");
   fb = Memory(length, sizeof(char));
   if (fseek(fp, position, SEEK_SET)) EXIT("File seek error\n");
   if (fread(fb, 1, length, fp) != length) EXIT("File read error\n");
@@ -172,7 +173,7 @@ char *Read(char *filename, int position, int length) {
 void Write(char *filename, int position, int length, char *buffer) {
   FILE *fp;
 
-  if ((fp = fopen(filename, "r+b")) == NULL) EXIT("File open error\n");
+  if ((fp = fopen(filename, "r+b")) == NULL) EXIT("File open error (Write)\n");
   if (fseek(fp, position, SEEK_SET)) EXIT("File seek error\n");
   if (fwrite(buffer, 1, length, fp) != length) EXIT("File write error\n");
   if (fclose(fp) == EOF) EXIT("File close error\n");
